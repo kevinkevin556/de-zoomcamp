@@ -1,4 +1,4 @@
-### 1. Introduction to Docker
+## 1. Introduction to Docker
 
 我採用的設定，是透過 wsl 操作 Windows 系統中的 Docker。在開始前，記得啟動 Docker Desktop。
 
@@ -7,16 +7,13 @@
 > [!WARNING]
 > 遺憾的是，因為後續的章節會透過 Docker 運行 PostgresQL 和 PostgresQL 的圖形使用者介面(GUI) - pgadmin，而二者皆僅提供 Linux 的映像檔 (image)，所以無法在 Windows 系統下跟著課程內容實作。
 
-### 2. Ingesting NY Taxi Data to Postgres
+## 2. Ingesting NY Taxi Data to Postgres
 
 [![](https://img.shields.io/youtube/views/2JM-ziJt0WI?style=social)](https://www.youtube.com/watch?v=2JM-ziJt0WI)
 
 在這個單元，我們將會透過 Docker 創建能夠運行 [Postgres Database 的容器](https://hub.docker.com/r/library/postgres)，並將 [NY Taxi](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) 的資料加入 Postgres Database 之中。
 
-<details>
-<summary>
-<h4> Step 1. Postgres Database From Docker </h4>
-</summary>
+#### Step 1. Postgres Database From Docker
 
 在 WSL 中，有些步驟跟講師示範的有些不同。我們首先得在Docker中掛載一個空間:
 
@@ -48,12 +45,7 @@ pgcli -h localhost -p 5432 -u root -d ny_taxi
 > - pgcli
 > - psycopg_binary
 
-</details>
-
-<details>
-<summary>
-<h4> Step 2. NY Taxi Data </h4>
-</summary>
+#### Step 2. NY Taxi Data
 
 因為目前 [NY Taxi](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) 資料的公開格式已經改成 `.parquet`，所以我將原本`.csv`的操作流程，針對`.parquet`做了些許調整。
 
@@ -65,16 +57,11 @@ pgcli -h localhost -p 5432 -u root -d ny_taxi
 > - pyarrow
 > - psycopg2_binary
 
-</details>
-
-### 3. Connecting pgAdmin and Postgres
+## 3. Connecting pgAdmin and Postgres
 
 [![](https://img.shields.io/youtube/views/hCAIVe9N0ow?style=social)](https://www.youtube.com/watch?v=hCAIVe9N0ow)
 
-<details>
-<summary>
-<a href="https://youtu.be/hCAIVe9N0ow?si=TsMgA-X8Iwm3jUPM&t=127"> <h4> Step 1. Start using pdAdmin </h4> </a>
-</summary>
+#### Step 1. Start using pdAdmin
 
 在這個小節中，我們開始使用一個為 Postgres 設計的 GUI -- [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/)
 來查詢 Postgres 資料庫。進入網站後，點選 Container 就可以看到 pdAdmin 在 DockerHub 的首頁。
@@ -106,12 +93,7 @@ docker run -it \
 > [!TIP]
 > 因為 Postgres 和 pdAdmin 分別在互不連通的容器裡運行，所以我們需要透過 **網路 (network)** 連接二個容器，
 
-</details>
-
-<details>
-<summary>
-<a href="https://youtu.be/hCAIVe9N0ow?si=TsMgA-X8Iwm3jUPM&t=127"> <h4> Step 2. Docker network </h4> </a>
-</summary>
+#### Step 2. Docker network
 
 首先輸入以下指令在 Docker 中新增一個網路 `pg-network`
 
@@ -169,9 +151,7 @@ docker run -it \
 
 便完成了容器間的通訊，順利在 pgAdmin 中接入資料庫。
 
-</details>
-
-### 4. Dockerizing the Ingestion Script
+## 4. Dockerizing the Ingestion Script
 
 在這個小節，我們學習如何將 1.2.2 的資料導入 (Data ingestion) 腳本，也加入 Docker 中。
 
@@ -216,7 +196,7 @@ docker run -it \
     --url=${URL}
 ```
 
-### Docker Compose
+## 5.Docker Compose
 
 新增一個 `docker-compose.yaml` 檔案，並把前面所使用的容器設定都放進去。
 
