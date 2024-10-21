@@ -1,0 +1,41 @@
+services:
+  pgdatabase:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ny_taxi
+    volumes:
+      - dtc_postgres_volume_local:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    ports:
+      - 8080:80
+  ingest_data:
+    build: .
+    command:
+      - "--user=root"
+      - "--password=root"
+      - "--host=pgdatabase"
+      - "--port=5432"
+      - "--db=ny_taxi"
+      - "--taxi_data_url=https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet"
+      - "--zone_data_url=https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv"
+    depends_on:
+      pgdatabase:
+        condition: service_healthy
+        restart: false
+
+volumes:
+  dtc_postgres_volume_local:
