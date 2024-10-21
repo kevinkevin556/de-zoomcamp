@@ -1,5 +1,8 @@
-## 1.2.1 - Introduction to Docker
+### Table of Content
+* [Ingesting NY Taxi Data to Postgres](#122---ingesting-ny-taxi-data-to-postgres)
+* [Connecting pgAdmin and Postgres](#123---connecting-pgadmin-and-postgres)
 
+## 1.2.1 - Introduction to Docker
 我採用的設定，是透過 wsl 操作 Windows 系統中的 Docker。在開始前，記得啟動 Docker Desktop。
 
 如果想要在 Windows 系統下直接運行 Docker 的話，可以參考此篇 [筆記](./how-to-run-docker-in-primitive-windows.mdhow-to)。
@@ -7,25 +10,18 @@
 > [!WARNING]
 > 遺憾的是，因為後續的章節會透過 Docker 運行 PostgresQL 和 PostgresQL 的圖形使用者介面(GUI) - pgadmin，而二者皆僅提供 Linux 的映像檔 (image)，所以無法在 Windows 系統下跟著課程內容實作。
 
-
-<br><br>
-
 ## 1.2.2 - Ingesting NY Taxi Data to Postgres
-
-[![](https://img.shields.io/youtube/views/2JM-ziJt0WI?style=social)](https://www.youtube.com/watch?v=2JM-ziJt0WI)
+[![](https://img.shields.io/youtube/views/2JM-ziJt0WI?style=social)](https://www.youtube.com/watch?v=2JM-ziJt0WI) 
+![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)
 
 > 在這個單元，我們將會透過 Docker 創建能夠運行 [Postgres Database 的容器](https://hub.docker.com/r/library/postgres)，並將 [NY Taxi](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) 的資料加入 Postgres Database 之中。
 
-#### Step 1. Postgres Database From Docker
-
+### Step 1. Postgres Database From Docker
 在 WSL 中，有些步驟跟 Alexey 示範的有些不同。我們首先得在 Docker 中掛載一個 Volume:
-
 ```docker
 docker volume create --name dtc_postgres_volume_local -d local
 ```
-
 接著運行容器
-
 ```docker
 docker run -it  \
     -e POSTGRES_USER="root" \
@@ -36,44 +32,39 @@ docker run -it  \
     postgres:13
 ```
 
-最後測試一下可不可以利用`pgcli`跟資料庫後端互動：
-
+最後測試一下可不可以利用 `pgcli` 跟資料庫後端互動，我們先安裝以下 Python 套件
+```shell
+pip install pgcli psycopg_binary
+```
+接著在 shell 裡面執行
 ```shell
 pgcli -h localhost -p 5432 -u root -d ny_taxi
 ```
+### Step 2. NY Taxi Data
+因為目前 [NY Taxi](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) 資料的公開格式已經改成 `.parquet`，所以我將原本`.csv`的操作流程，針對`.parquet`做了些許調整。首先，我們先 `pip install` 以下的 Python 套件：
+```
+pip install pandas sqlalchemy pyarrow psycopg2_binary
+```
+並到這個[網站](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)下載 2021 年的 Yellow Taxi Trip Records。或者透過命令工具下載資料：
+```
+wget https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet
+```
+接著開啟 jupyter notebook 執行 [upload-data.ipynb]()，你可以直接複製這個檔案並使用它。
+注意：我完成這個步驟的時候，將資料和 `upload-data.ipynb` 放置於同一個目錄下。
+如果你沒有將資料放在同一個目錄之下，那麼你將需要按照檔案路徑修改 `ipynb` 中的 `pd.read_parquet(<your-data-path>)` 來讀取對應位置的資料。
 
-> [!NOTE]
-> 我們需要以下套件 Dependencies：
->
-> - pgcli
-> - psycopg_binary
 
-#### Step 2. NY Taxi Data
-
-因為目前 [NY Taxi](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) 資料的公開格式已經改成 `.parquet`，所以我將原本`.csv`的操作流程，針對`.parquet`做了些許調整。
-
-> [!NOTE]
-> 我們需要以下套件 Dependencies：
->
-> - pandas
-> - sqlalchemy
-> - pyarrow
-> - psycopg2_binary
-
-<br><br>
-
-## 1.2.3 -  Connecting pgAdmin and Postgres
-
+## 1.2.3 - Connecting pgAdmin and Postgres
 [![](https://img.shields.io/youtube/views/hCAIVe9N0ow?style=social)](https://www.youtube.com/watch?v=hCAIVe9N0ow)
+[![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
 > 在這個小節中，我們開始使用一個為 Postgres 設計的 GUI -- [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/)
 來查詢 Postgres 資料庫。
 
-#### Step 1. Start using pdAdmin
+### Step 1. Start using pdAdmin
 進入 [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/) 的網站後，點選 Container 就可以看到 pdAdmin 在 DockerHub 的首頁。
 
 我們執行下面的 Docker 指令來運行 pgAdmin 的容器：
-
 ```docker
 docker run -it \
     -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
@@ -81,7 +72,6 @@ docker run -it \
     -p 8080:80 \
     dpage/pgadmin4
 ```
-
 > [!NOTE]
 > 在這個步驟我們便可以關閉 pgcli 了。二者本質上而言，都同樣是跟資料庫溝通的介面程式，因此我們擇一即可。
 
@@ -99,16 +89,12 @@ docker run -it \
 > [!TIP]
 > 因為 Postgres 和 pdAdmin 分別在互不連通的容器裡運行，所以我們需要透過 **網路 (network)** 連接二個容器，
 
-#### Step 2. Docker network
-
-首先輸入以下指令在 Docker 中新增一個網路 `pg-network`
-
+### Step 2. Setup Docker network
+這邊我們要解決 Step 1 留下的問題。首先輸入以下指令在 Docker 中新增一個網路 `pg-network`
 ```docker
 docker network create pg-network
 ```
-
 接著運行 postgres 的容器，並在指令中加入剛剛新增的網路和容器的名稱。
-
 ```docker
 docker run -it  \
     -e POSTGRES_USER="root" \
@@ -129,7 +115,6 @@ docker run -it  \
 > 你可以利用 `docker container prune` 將先前新增的容器刪除後再重來。或者透過 `docker start pg-database` 重新啟用容器。
 
 然後，運行 pgadmin 的容器，並在指令中加入剛剛新增的網路和容器的名稱。
-
 ```docker
 docker run -it \
     -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
@@ -139,35 +124,67 @@ docker run -it \
     --name pg-admin\
     dpage/pgadmin4
 ```
-
 > [!TIP]
 > 可以透過 `Ctrl+P` `Ctrl+Q` 返回 shell，將 docker 容器保留在背景運行。
 
-最後在 "Add New Server" 中的 `Gerneral >  Name` 輸入 Docker localhost，`Connection`輸入以下資訊
-
+### Step 3. Connect Dastabase to GUI
+最後在 "Add New Server" 中的 `Gerneral >  Name` 輸入 "Docker localhost"，`Connection` 輸入以下資訊
 - `Host Name/address`: pd-database
 - `Port`: 5432
 - `Maintainence database`: postgres
 - `Username`: root
 - `Password`: root
 
+如此便完成了容器間的通訊，順利在 pgAdmin 中接入資料庫。
 |   Settings - General   |   Settings - Connection   |
 | :--------------------: | :-----------------------: |
 | ![](./png/general.png) | ![](./png/connection.png) |
 
-便完成了容器間的通訊，順利在 pgAdmin 中接入資料庫。
-
-<br><br>
+<br>
 
 ## 1.2.4 - Dockerizing the Ingestion Script
+[![](https://img.shields.io/youtube/views/B1WwATwf-vY?style=social)](https://www.youtube.com/watch?v=B1WwATwf-vY)
+[![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
-在這個小節，我們學習如何將 1.2.2 的資料導入 (Data ingestion) 腳本也加入 Docker 中。
+> 在這個小節，我們學習如何將 1.2.2 的資料導入 (Data ingestion) 腳本也加入 Docker 中。
 
-#### 製作 CLI 工具 - ingest.py
+### Step 1. 製作 CLI 工具 - `ingest_data.py`
+我們可以利用 `jupyter nbconvert` 將 `ipynb` 轉換為 `py` 檔
+```shell
+jupyter nbconvert --to=script upload-data.ipynb
+```
+將不需要的程式碼刪除後，我們加入 `argparse` 使我們的 python script 可以輕鬆地接受命令列參數。調整後的 python script 大致如下：
+* 利用 `argparse` 解析以下使用者透過輸入的資訊
+    * Username
+    * Password
+    * Host
+    * Port
+    * Database name
+    * Table name
+    * URL for the CSV (parquet) file 
+* 從上述的 URL 下載資料
+* 剩餘的參數用於連接 Postgres database 並將資料匯入資料庫中，程式碼如下所示
+```python
+engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
+```
+最後完成的 python script 可以參考這個檔案：[ingest_data.py]()
 
-#### 製作 Dockerfile
+### Step 2. 製作 Dockerfile
+我們能以先前的 Dockerfile 為基礎去修改：
+```dockerfile
+FROM python:3.9.1
 
-#### 運行容器
+RUN apt-get install wget
+RUN pip install pandas sqlalchemy psycopg2_binary pyarrow
+
+WORKDIR /app
+COPY ingest_data.py ingest_data.py
+
+ENTRYPOINT [ "python", "ingest_data.py" ]
+```
+
+
+### Step 3. 運行容器
 
 ```docker
 docker volume create --name dtc_postgres_volume_local -d local
@@ -204,14 +221,14 @@ docker run -it \
     --url=${URL}
 ```
 
-<br><br>
+<br>
 
 ## 1.2.5 - Running Postgres and pgAdmin with Docker-Compose
 [![](https://img.shields.io/youtube/views/hKI6PkPhpa0?style=social)](https://www.youtube.com/watch?v=hKI6PkPhpa0)
 
 >  在這個小節中，我們學習使用 Docker Compose，一次啟動所有與服務相關的程序。
 
-#### Step 1. Create `docker-compose.yaml`
+### Step 1. Create `docker-compose.yaml`
 
 新增一個 `docker-compose.yaml` 檔案，並把前面所使用的容器設定都放進去。
 
@@ -245,7 +262,7 @@ volumes:
     external: true
 ```
 
-#### Step 2. Start and stop services
+### Step 2. Start and stop services
 
 接著在 shell 中輸入以下指令，一次為所有服務建立並開啟容器。
 
