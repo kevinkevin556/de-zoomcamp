@@ -1,4 +1,4 @@
-## 1. Introduction to Docker
+## 1.2.1 - Introduction to Docker
 
 我採用的設定，是透過 wsl 操作 Windows 系統中的 Docker。在開始前，記得啟動 Docker Desktop。
 
@@ -10,7 +10,7 @@
 
 <br><br>
 
-## 2. Ingesting NY Taxi Data to Postgres
+## 1.2.2 - Ingesting NY Taxi Data to Postgres
 
 [![](https://img.shields.io/youtube/views/2JM-ziJt0WI?style=social)](https://www.youtube.com/watch?v=2JM-ziJt0WI)
 
@@ -62,7 +62,7 @@ pgcli -h localhost -p 5432 -u root -d ny_taxi
 
 <br><br>
 
-## 3. Connecting pgAdmin and Postgres
+## 1.2.3 -  Connecting pgAdmin and Postgres
 
 [![](https://img.shields.io/youtube/views/hCAIVe9N0ow?style=social)](https://www.youtube.com/watch?v=hCAIVe9N0ow)
 
@@ -159,7 +159,7 @@ docker run -it \
 
 <br><br>
 
-## 4. Dockerizing the Ingestion Script
+## 1.2.4 - Dockerizing the Ingestion Script
 
 在這個小節，我們學習如何將 1.2.2 的資料導入 (Data ingestion) 腳本也加入 Docker 中。
 
@@ -206,7 +206,7 @@ docker run -it \
 
 <br><br>
 
-## 5. Docker Compose
+## 1.2.5 - Running Postgres and pgAdmin with Docker-Compose
 [![](https://img.shields.io/youtube/views/hKI6PkPhpa0?style=social)](https://www.youtube.com/watch?v=hKI6PkPhpa0)
 
 >  在這個小節中，我們學習使用 Docker Compose，一次啟動所有與服務相關的程序。
@@ -288,3 +288,21 @@ docker compose down
 > 值得一提的是，`ingest_data` 必須要在 `pgdatabase` 開啟之後才可以導入資料，因此我們要在`ingest_data`底下加入 `depend_on`、`pgdatabase` 底下加入 `healthcheck` 來確保服務的運行順序。具體細節可以參考這個小節的 [docker-compose.yaml](1.2.6%20-%20SQL%20Refresher/docker-compose.yaml)。
 
 #### Step 2. SQL queries
+```sql
+SELECT
+    *
+FROM
+    trips
+LIMIT 100;
+```
+
+
+
+
+
+
+## 1.3.2 Terraform Basics
+https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#example-usage---life-cycle-settings-for-storage-bucket-objects
+
+
+## 1.3.3 - Terraform Variables
