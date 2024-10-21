@@ -19,3 +19,4 @@ services:
 
 volumes:
   dtc_postgres_volume_local:
+    external: true
