@@ -7,15 +7,18 @@
 > [!WARNING]
 > 遺憾的是，因為後續的章節會透過 Docker 運行 PostgresQL 和 PostgresQL 的圖形使用者介面(GUI) - pgadmin，而二者皆僅提供 Linux 的映像檔 (image)，所以無法在 Windows 系統下跟著課程內容實作。
 
+
+<br><br>
+
 ## 2. Ingesting NY Taxi Data to Postgres
 
 [![](https://img.shields.io/youtube/views/2JM-ziJt0WI?style=social)](https://www.youtube.com/watch?v=2JM-ziJt0WI)
 
-在這個單元，我們將會透過 Docker 創建能夠運行 [Postgres Database 的容器](https://hub.docker.com/r/library/postgres)，並將 [NY Taxi](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) 的資料加入 Postgres Database 之中。
+> 在這個單元，我們將會透過 Docker 創建能夠運行 [Postgres Database 的容器](https://hub.docker.com/r/library/postgres)，並將 [NY Taxi](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) 的資料加入 Postgres Database 之中。
 
 #### Step 1. Postgres Database From Docker
 
-在 WSL 中，有些步驟跟講師示範的有些不同。我們首先得在Docker中掛載一個空間:
+在 WSL 中，有些步驟跟 Alexey 示範的有些不同。我們首先得在 Docker 中掛載一個 Volume:
 
 ```docker
 docker volume create --name dtc_postgres_volume_local -d local
@@ -57,14 +60,17 @@ pgcli -h localhost -p 5432 -u root -d ny_taxi
 > - pyarrow
 > - psycopg2_binary
 
+<br><br>
+
 ## 3. Connecting pgAdmin and Postgres
 
 [![](https://img.shields.io/youtube/views/hCAIVe9N0ow?style=social)](https://www.youtube.com/watch?v=hCAIVe9N0ow)
 
-#### Step 1. Start using pdAdmin
+> 在這個小節中，我們開始使用一個為 Postgres 設計的 GUI -- [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/)
+來查詢 Postgres 資料庫。
 
-在這個小節中，我們開始使用一個為 Postgres 設計的 GUI -- [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/)
-來查詢 Postgres 資料庫。進入網站後，點選 Container 就可以看到 pdAdmin 在 DockerHub 的首頁。
+#### Step 1. Start using pdAdmin
+進入 [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/) 的網站後，點選 Container 就可以看到 pdAdmin 在 DockerHub 的首頁。
 
 我們執行下面的 Docker 指令來運行 pgAdmin 的容器：
 
@@ -151,9 +157,11 @@ docker run -it \
 
 便完成了容器間的通訊，順利在 pgAdmin 中接入資料庫。
 
+<br><br>
+
 ## 4. Dockerizing the Ingestion Script
 
-在這個小節，我們學習如何將 1.2.2 的資料導入 (Data ingestion) 腳本，也加入 Docker 中。
+在這個小節，我們學習如何將 1.2.2 的資料導入 (Data ingestion) 腳本也加入 Docker 中。
 
 #### 製作 CLI 工具 - ingest.py
 
@@ -189,16 +197,28 @@ docker run -it \
     taxi_ingest:v001 \
     --user=root \
     --password=root \
-    --host=localhost \
+    --host=pg-database \
     --port=5432 \
     --db=ny_taxi \
     --table_name=yellow_taxi_trips \
     --url=${URL}
 ```
 
-## 5.Docker Compose
+<br><br>
+
+## 5. Docker Compose
+[![](https://img.shields.io/youtube/views/hKI6PkPhpa0?style=social)](https://www.youtube.com/watch?v=hKI6PkPhpa0)
+
+>  在這個小節中，我們學習使用 Docker Compose，一次啟動所有與服務相關的程序。
+
+#### Step 1. Create `docker-compose.yaml`
 
 新增一個 `docker-compose.yaml` 檔案，並把前面所使用的容器設定都放進去。
+
+值得注意的是，我們在先前掛載 (mount) 的
+Docker Volume `dtc_postgres_volume_local` 也需要在這個檔案中的 `volume` 底下列出，並加入屬性 `external: true`
+代表已經創建的容器空間，沒有這個屬性的話，Docker 就會當成一個 docker-compose 的內部命名，並在啟動的時候另外建立
+一個毫不相干的 Volume 供這組服務使用。
 
 ```yaml
 services:
@@ -222,17 +242,49 @@ services:
 
 volumes:
   dtc_postgres_volume_local:
+    external: true
 ```
 
-接著在 shell 中輸入以下指令，一次開啟所有容器。
+#### Step 2. Start and stop services
+
+接著在 shell 中輸入以下指令，一次為所有服務建立並開啟容器。
 
 ```shell
-docker-compose up
+docker compose up
+```
+
+或者加入選項 `-d` 在背景運行服務。
+
+```shell
+docker compose up -d
 ```
 
 > [!TIP]
-> 使用 docker-compose後，我們不需要設定網路了！
+> 可以發現一件事：使用 docker-compose 後，我們不需要設定網路了！
 
 > [!NOTE]
-> 根據 [dockerdocs](https://docs.docker.com/compose/how-tos/networking/)，我們不需要手動地將容器透過網路串聯， docker-compose 預設便建立一個網路，並把所有使用到的容器加入其中。<br><br>
+> 根據 [Docker Docs](https://docs.docker.com/compose/how-tos/networking/)，我們不需要手動地將容器透過網路串聯， docker-compose 預設便建立一個網路，並把所有使用到的容器加入其中。<br><br>
 > "By default Compose sets up a single network for your app. Each container for a service joins the default network and is both reachable by other containers on that network, and discoverable by the service's name."
+
+在 shell 中輸入以下指令，可以關閉所有服務並刪除容器。
+
+```shell
+docker compose down
+```
+
+> [!NOTE]
+> `docker-compose` or `docker compose`? <br><br>
+> 在影片中 Alexey 用了 `docker-compose`， 然而這是 Compose V1 的指令，它獨立於 Docker 被開發出來，並在 2023 年 7 月宣布停止所有更新。 `docker compose`則是 Compose V2，它被整合進 Docker 作為 Docker 服務的一部分。因此，使用`docker compose` 會是更好的選擇。 可以參考：[Migrate to Compose V2](https://docs.docker.com/compose/releases/migrate/)<br><br> ![](https://docs.docker.com/compose/images/v1-versus-v2.png)
+
+<br><br>
+
+## 6. SQL Resfresher
+[![](https://img.shields.io/youtube/views/QEcps_iskgg?style=social)](https://www.youtube.com/watch?v=QEcps_iskgg)
+
+#### Step 1. Docker-compose the whole service
+在 Youtube 影片中，Alexey 已經預先在 jupyter notebook 中將 zone 這個資料表放進去了。我在這邊採用了一個不同的方法：把前面的 `ingest_data.py` 和他對應的 Dockerfile 稍作調整後，加入 `docker-compose.yaml` 中。
+
+> [!TIP]
+> 值得一提的是，`ingest_data` 必須要在 `pgdatabase` 開啟之後才可以導入資料，因此我們要在`ingest_data`底下加入 `depend_on`、`pgdatabase` 底下加入 `healthcheck` 來確保服務的運行順序。具體細節可以參考這個小節的 [docker-compose.yaml](1.2.6%20-%20SQL%20Refresher/docker-compose.yaml)。
+
+#### Step 2. SQL queries
