@@ -1,6 +1,8 @@
 ### Table of Content
 * [Ingesting NY Taxi Data to Postgres](#122---ingesting-ny-taxi-data-to-postgres)
 * [Connecting pgAdmin and Postgres](#123---connecting-pgadmin-and-postgres)
+* [Dockerizing the Ingestion Script](#124---dockerizing-the-ingestion-script)
+* [Running Postgres and pgAdmin with Docker-Compose](#125---running-postgres-and-pgadmin-with-docker-compose)
 
 ## 1.2.1 - Introduction to Docker
 我採用的設定，是透過 wsl 操作 Windows 系統中的 Docker。在開始前，記得啟動 Docker Desktop。
@@ -170,7 +172,7 @@ engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
 最後完成的 python script 可以參考這個檔案：[ingest_data.py]()
 
 ### Step 2. 製作 Dockerfile
-我們能以先前的 Dockerfile 為基礎去修改：
+我們能以先前的 Dockerfile 為基礎去修改，得到用於 `ingest_data.py` 的 Dockerfile：
 ```dockerfile
 FROM python:3.9.1
 
@@ -183,9 +185,7 @@ COPY ingest_data.py ingest_data.py
 ENTRYPOINT [ "python", "ingest_data.py" ]
 ```
 
-
 ### Step 3. 運行容器
-
 ```docker
 docker volume create --name dtc_postgres_volume_local -d local
 docker run -it  \
@@ -225,6 +225,7 @@ docker run -it \
 
 ## 1.2.5 - Running Postgres and pgAdmin with Docker-Compose
 [![](https://img.shields.io/youtube/views/hKI6PkPhpa0?style=social)](https://www.youtube.com/watch?v=hKI6PkPhpa0)
+[![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
 >  在這個小節中，我們學習使用 Docker Compose，一次啟動所有與服務相關的程序。
 
@@ -236,7 +237,6 @@ docker run -it \
 Docker Volume `dtc_postgres_volume_local` 也需要在這個檔案中的 `volume` 底下列出，並加入屬性 `external: true`
 代表已經創建的容器空間，沒有這個屬性的話，Docker 就會當成一個 docker-compose 的內部命名，並在啟動的時候另外建立
 一個毫不相干的 Volume 供這組服務使用。
-
 ```yaml
 services:
   pgdatabase:
@@ -263,40 +263,33 @@ volumes:
 ```
 
 ### Step 2. Start and stop services
-
 接著在 shell 中輸入以下指令，一次為所有服務建立並開啟容器。
-
 ```shell
 docker compose up
 ```
-
 或者加入選項 `-d` 在背景運行服務。
-
 ```shell
 docker compose up -d
 ```
-
-> [!TIP]
-> 可以發現一件事：使用 docker-compose 後，我們不需要設定網路了！
-
-> [!NOTE]
-> 根據 [Docker Docs](https://docs.docker.com/compose/how-tos/networking/)，我們不需要手動地將容器透過網路串聯， docker-compose 預設便建立一個網路，並把所有使用到的容器加入其中。<br><br>
-> "By default Compose sets up a single network for your app. Each container for a service joins the default network and is both reachable by other containers on that network, and discoverable by the service's name."
-
 在 shell 中輸入以下指令，可以關閉所有服務並刪除容器。
-
 ```shell
 docker compose down
 ```
 
+> [!TIP]
+> 可以發現一件事：**使用 docker-compose 後，我們不需要設定網路了！**
+> 根據 [Docker Docs](https://docs.docker.com/compose/how-tos/networking/)，我們不需要手動地將容器透過網路串聯， docker-compose 預設便建立一個網路，並把所有使用到的容器加入其中。<br><br>
+> "By default Compose sets up a single network for your app. Each container for a service joins the default network and is both reachable by other containers on that network, and discoverable by the service's name."
+
 > [!NOTE]
 > `docker-compose` or `docker compose`? <br><br>
-> 在影片中 Alexey 用了 `docker-compose`， 然而這是 Compose V1 的指令，它獨立於 Docker 被開發出來，並在 2023 年 7 月宣布停止所有更新。 `docker compose`則是 Compose V2，它被整合進 Docker 作為 Docker 服務的一部分。因此，使用`docker compose` 會是更好的選擇。 可以參考：[Migrate to Compose V2](https://docs.docker.com/compose/releases/migrate/)<br><br> ![](https://docs.docker.com/compose/images/v1-versus-v2.png)
+> 在影片中 Alexey 用了 `docker-compose`， 然而這是 Compose V1 的指令，它獨立於 Docker 被開發出來，並在 2023 年 7 月宣布停止所有更新。 `docker compose`則是 Compose V2，它被整合進 Docker 作為 Docker 服務的一部分。因此，使用`docker compose` 會是更好的選擇。 可以參考：[Migrate to Compose V2](https://docs.docker.com/compose/releases/migrate/)<br><br> <img src="https://docs.docker.com/compose/images/v1-versus-v2.png" width="500" align="center" />
 
-<br><br>
+<br>
 
 ## 6. SQL Resfresher
 [![](https://img.shields.io/youtube/views/QEcps_iskgg?style=social)](https://www.youtube.com/watch?v=QEcps_iskgg)
+[![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
 #### Step 1. Docker-compose the whole service
 在 Youtube 影片中，Alexey 已經預先在 jupyter notebook 中將 zone 這個資料表放進去了。我在這邊採用了一個不同的方法：把前面的 `ingest_data.py` 和他對應的 Dockerfile 稍作調整後，加入 `docker-compose.yaml` 中。
