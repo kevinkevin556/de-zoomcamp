@@ -1,9 +1,14 @@
 ### Table of Content
-* [Ingesting NY Taxi Data to Postgres](#122---ingesting-ny-taxi-data-to-postgres)
-* [Connecting pgAdmin and Postgres](#123---connecting-pgadmin-and-postgres)
-* [Dockerizing the Ingestion Script](#124---dockerizing-the-ingestion-script)
-* [Running Postgres and pgAdmin with Docker-Compose](#125---running-postgres-and-pgadmin-with-docker-compose)
-* [SQL Resfresher](#126---sql-resfresher)
+* Docker and Postgres
+  * [Ingesting NY Taxi Data to Postgres](#122---ingesting-ny-taxi-data-to-postgres)
+  * [Connecting pgAdmin and Postgres](#123---connecting-pgadmin-and-postgres)
+  * [Dockerizing the Ingestion Script](#124---dockerizing-the-ingestion-script)
+  * [Running Postgres and pgAdmin with Docker-Compose](#125---running-postgres-and-pgadmin-with-docker-compose)
+  * [SQL Resfresher](#126---sql-resfresher)
+* Terraform
+  * [Terraform Primer](#131-terraform-primer)
+  * [Terraform Basics](#132-terraform-basics)
+  * [Terraform Variables](#133---terraform-variables)
 
 ## 1.2.1 - Introduction to Docker
 我採用的設定，是透過 wsl 操作 Windows 系統中的 Docker。在開始前，記得啟動 Docker Desktop。
@@ -328,7 +333,7 @@ LIMIT 100;
 TBD
 
 
-## 1.3.1 Terraform Primer
+## 1.3.1 - Terraform Primer
 [![](https://img.shields.io/youtube/views/s2bOYDCKl_M?style=social)](https://www.youtube.com/watch?v=s2bOYDCKl_M)
 [![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
@@ -355,11 +360,13 @@ TBD
   * 例如：在使用 Terraform 之前手動部署的雲端資源，無法透過 Terraform 刪除。
 
 
-## 1.3.2 Terraform Basics
+## 1.3.2 - Terraform Basics
 [![](https://img.shields.io/youtube/views/Y2ux7gq3Z0o?style=social)](https://www.youtube.com/watch?v=Y2ux7gq3Z0o)
 [![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
-> 在這個小節，我們將會學習基本的 Terraform 流程
+> 在這個小節，我們將會學習基本的 Terraform 流程: <br>
+> init - plan - apply - destroy
+
 
 
 ### Step 0. Create a Service Account
@@ -371,7 +378,7 @@ TBD
 5. 點選 terraform-runner，開啟選單後點選 `Manage key`，接著 `Add key > Create new key > JSON`，然後把這個 json 個式的私鑰下載到工作目錄(影片中是`terrademo`)下的 `keys` 資料夾取名為 `my-creds.json`。
 
 
-### Step 1. Create Terraform Script
+### Step 1. Create Terraform Configuration
 建立一個檔案 `./main.tf`，並在 [Example Usage - Life cycle settings for storage bucket objects](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#example-usage---life-cycle-settings-for-storage-bucket-objects) 複製建立雲端空間的程式片段。完成後的 `main.tf` 如下所示。
 
 ```terraform
@@ -413,7 +420,7 @@ resource "google_storage_bucket" "demo-bucket" {
 }
 ```
 
-### Step 2. Run Terraform Script
+### Step 2. Apply Terraform Configuration
 1. 我們首先初始化專案， Terrafrom 會根據你 `main.tf` 的服務商安裝對應所需的擴充，並產生一個 lock file `.terraform.lock.hcl` 來記錄服務商的版本。
 ```shell
 terraform init 
@@ -445,3 +452,107 @@ terraform destroy
 ![](./png/terraform-destroy-1.png) 
 
 ## 1.3.3 - Terraform Variables
+[![](https://img.shields.io/youtube/views/PBi0hHjLftk?style=social)](https://www.youtube.com/watch?v=PBi0hHjLftk)
+[![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
+
+> 在這個小節，我們學會在另外的檔案定義我們的變數，讓我們的配置文件便的更加可讀且易用。
+
+這個小節的例子，除了上個小節的 storage bucket 外，我們多建立一個 BigQeury dataset。我們在同樣的目錄下新增一個檔案 `variable.tf`。
+
+### Step 1. Create Terraform Configuration
+
+在 `variables.tf` 我們定義了一些變數
+```terraform
+variable "credentials" {
+  description = "My Credentials"
+  default     = "./keys/my-creds.json"
+}
+
+variable "project" {
+  description = "Project"
+  default     = "terraform-demo-439216"
+}
+
+variable "region" {
+  description = "Region"
+  default     = "us-central1"
+}
+
+variable "location" {
+  description = "Project location"
+  default     = "US"
+}
+
+variable "bq_dataset_name" {
+  description = "My BigQuery Dataset Name"
+  default     = "demo_dataset"
+}
+
+variable "gcs_bucket_name" {
+  description = "My Storage Bucket Name"
+  default     = "terraform-demo-439216-terra-bucket"
+}
+
+variable "gcs_storage_class" {
+  description = "Bucket Storage Class"
+  default     = "STANDARD"
+}
+```
+
+因此，我們在 `main.tf` 裡面就可以透過 `var.<variable-name>`來取用他們的值。
+```terraform
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "6.7.0"
+    }
+  }
+}
+
+provider "google" {
+  project     = var.project
+  region      = var.region
+  credentials = file(var.credentials)
+}
+
+
+resource "google_storage_bucket" "demo-bucket" {
+  name          = var.gcs_bucket_name
+  location      = var.location
+  force_destroy = true
+  storage_class = var.gcs_storage_class
+
+  lifecycle_rule {
+    condition {
+      age = 1
+    }
+    action {
+      type = "AbortIncompleteMultipartUpload"
+    }
+  }
+}
+
+resource "google_bigquery_dataset" "demo_dataset" {
+  dataset_id = var.bq_dataset_name
+  location   = var.location
+}
+```
+
+這樣的好處在於，我們可以增加設定的復用性和一致性，就如例子中，我們想要 google storage bucket 和 BigQuery 放在同一個地區，我們就可以透過在不同的區塊中都調用 `var.location` 來完成，避免我們一時不察將它們設定在不同的位置。另外，在`variable.tf` 的變數定義中，我們沒辦法呼叫函式來設定值，要使用函式僅可以在 `main.tf` 中使用，例如 `file(<credentials>)`。
+
+### Step 2. Apply Terraform Configuration
+同樣的流程，我們透過 Terraform 啟動雲端資源 (Cloud Storage 和 BigQuery Dataset，這邊僅呈現 BigQuery Dataset)。
+```shell
+terraform init
+terraform plan
+terraform apply
+```
+![](./png/terraform-apply-2.png)
+
+並利用 `destroy` 刪除不需要的雲端資源
+```shell
+terraform destroy
+```
+![](./png/terraform-destroy-2.png) 
+
