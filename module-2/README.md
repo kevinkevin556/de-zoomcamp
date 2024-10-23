@@ -50,27 +50,31 @@
 > 我們會用 Docker 建置，並透過 Mage 跟 Postgres 資料庫互動
 
 ### Configure Mage
-在最一開始的階段，我們可以使用 Docker 就可以在很短的時間內將 Mage 運行起來。我們先到這個 [mage-zoomcamp GitHub repo](https://github.com/mage-ai/mage-zoomcamp) 把資料複製到本機端。
+在最一開始的階段，我們可以使用 Docker 就可以在很短的時間內將 Mage 運行起來。
+
+1. 我們先到這個 [mage-zoomcamp GitHub repo](https://github.com/mage-ai/mage-zoomcamp) 把資料複製到本機端。
 ```shell
 git clone https://github.com/mage-ai/mage-zoomcamp.git
 ```
-接著我們複製一份到環境變數到 `.env` 這個檔案中
+> [!TIP]
+> 如果你直接 fork 這個 repo 的話，可以直接從 2. 開始做。
+
+2. 接著我們複製一份到環境變數到 `.env` 這個檔案中
 ```shell
 cp dev.env .env
 ```
-然後 `docker compose up` 開啟服務。
+3. 然後 `docker compose up` 開啟服務。
 ```shell
 docker compose up
 ```
-最後我們開啟瀏覽器，在網址列輸入 `localhost:6789` 就可以看到 Mage 的介面。
+4. 最後我們開啟瀏覽器，在網址列輸入 `localhost:6789` 就可以看到 Mage 的介面。
 
 ![](./png/mage-homepage.png)
 
 > [!NOTE]
 > 我們可以簡單看一下 `docker-compose.ymal` 來複習剛剛的流程為什麼是這樣做。 <br>
 > - 首先我們可以看到二個服務被開啟，`magic` 和 `postgres`，對應二個映像檔：`mageai:latest` 和 `postgres:14`。
-> - 二個服務下，都指定了環境變數的設定路徑：`env_file: - .env`，所以我們要將環境
-> 變數 (`dev.env`) 複製一份用檔名 `.env` 儲存起來。 
+> - 二個服務下，都指定了環境變數的設定路徑：`env_file: - .env`，所以我們要將環境變數 (`dev.env`) 複製一份以檔名 `.env` 儲存起來。 
 > - 對 `mage` 我們分配給它 port=6789，這也是我們在瀏覽器輸入的 port。
 > - Docker 服務啟動後，我們會發現工作目錄下多出很多檔案，因為我們在 `docker-compose.yaml` 綁定了 (bind-mount) 二個實體空間，所以我們操作過的檔案會出現在工作目錄下，我們也可以直接把檔案放進工作目錄供 Mage 取用 (例如之後章節的 Credentials)：
 >   - (工作目錄) .:/home/src/ 
