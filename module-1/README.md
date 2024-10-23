@@ -344,13 +344,13 @@ TBD
 > 簡單來說，寫好 Terraform 腳本，接著跑程式碼，就可以讓 Terraform 自動幫你開好機器。我們不再需要到 Web 介面上去手動設定雲端資源。
 
 ### Terraform is not ...
-* 不管理和更新基礎設施上的程式碼 (Does not manage and update code on infrastructure)
+* Terraform 不管理和更新基礎設施上的程式碼 (Does not manage and update code on infrastructure)
   * Terraform 負責基礎設施的配置，但不會處理運行在基礎設施上的應用程式
   * 例如：你透過 Terrafrom 開啟了一台 AWS 伺服器，它無法幫你在這台伺服器上安裝 Node.js，也無法部署你的網站代碼。
-* 無法更改不可變的資源 (Does not give you the ability to change immutable resources)
+* Terraform 無法更改不可變的資源 (Does not give you the ability to change immutable resources)
   * 某些資源一旦創建就不能修改，需要銷毀並重新創建
   * 例如：你建了一個在 North America 的 AWS S3 Bucket，你沒辦法單純透過設定更動存儲位置到 Asia Pacific，只能移除重建一個 Bucket。
-* 不用於管理未在 Terraform 文件中定義的資源 (Not used to manage resources not defined in your terraform files)
+* Terraform 不用於管理未在 Terraform 文件中定義的資源 (Not used to manage resources not defined in your terraform files)
   * 只能管理在 Terraform 配置文件中明確定義的資源，對於外部創建的資源則無法管理
   * 例如：在使用 Terraform 之前手動部署的雲端資源，無法透過 Terraform 刪除。
 
@@ -362,7 +362,7 @@ TBD
 > 在這個小節，我們將會學習基本的 Terraform 流程
 
 
-### Step 1. Create a Service Account
+### Step 0. Create a Service Account
 
 1. 在 Google Cloud 中新增一個專案 (Project) 名稱為 `terraform-demo`
 2. 點選左上角開啟選單，點選 `IAM & Admin > Service Account`，進入頁面後點擊 `+ CREATE SERVICE ACCOUNT`，開起新增畫面。
@@ -371,10 +371,13 @@ TBD
 5. 點選 terraform-runner，開啟選單後點選 `Manage key`，接著 `Add key > Create new key > JSON`，然後把這個 json 個式的私鑰下載到工作目錄(影片中是`terrademo`)下的 `keys` 資料夾取名為 `my-creds.json`。
 
 
-### Step 2. Create Terraform Script
-建立一個檔案 `./main.tf`，並在 [Example Usage - Life cycle settings for storage bucket objects](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#example-usage---life-cycle-settings-for-storage-bucket-objects) 複製建立雲端空間的程式片段。
+### Step 1. Create Terraform Script
+建立一個檔案 `./main.tf`，並在 [Example Usage - Life cycle settings for storage bucket objects](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#example-usage---life-cycle-settings-for-storage-bucket-objects) 複製建立雲端空間的程式片段。完成後的 `main.tf` 如下所示。
 
 ```terraform
+// The terraform block contains Terraform settings
+// including the required providers Terraform will use to provision your infrastructure.
+
 terraform {
   required_providers {
     google = {
@@ -384,11 +387,15 @@ terraform {
   }
 }
 
+// The provider block configures the specified provider
+
 provider "google" {
   project     = "terraform-demo-439216"
   region      = "us-central1"
   credentials = "./keys/my-creds.json"
 }
+
+// Use resource blocks to define components of your infrastructure.
 
 resource "google_storage_bucket" "demo-bucket" {
   name          = "terraform-demo-439216-terra-bucket"
@@ -405,27 +412,36 @@ resource "google_storage_bucket" "demo-bucket" {
   }
 }
 ```
-我們首先初始化專案：
+
+### Step 2. Run Terraform Script
+1. 我們首先初始化專案， Terrafrom 會根據你 `main.tf` 的服務商安裝對應所需的擴充，並產生一個 lock file `.terraform.lock.hcl` 來記錄服務商的版本。
 ```shell
 terraform init 
 ```
-接著使用 `plan` 產生部署計畫，這時候畫面上會顯示計畫的具體細節：
+初始化之餘，有另外 (可選的) 二件事可以幫助我們檢查我們的的配置文件：
+* 驗證 (validate) 我們的配置是否合格（沒有語法錯誤、沒有相互衝突的設定）
+```
+terraform validate
+```
+* 或者整理我們配置文件的格式 (format)
+```
+terraform fmt
+```
+
+2. 接著使用 `plan` 產生部署計畫，這時候畫面上會顯示計畫的具體細節：
 ```
 terraform plan
 ```
-最後使用 `apply` 執行計畫，terraform 將會執行剛剛 `plan` 的設定，為我們建立一個 google storage bucket
+3. 最後使用 `apply` 執行計畫，Terraform 將會執行剛剛 `plan` 的設定，為我們建立一個 google storage bucket
 ```shell
 terraform apply
 ```
-如果不需要資源了，我們可以利用 `destroy` 刪除雲端資源
+![](./png/terraform-apply-1.png)
+
+4. 如果不需要資源了，我們可以利用 `destroy` 刪除雲端資源
 ```shell
 terraform destroy
 ```
-
-|   terraform apply   |   terraform destroy  |
-| :--------------------: | :-----------------------: |
-| ![](./png/terraform-apply-1.png) | ![](./png/terraform-destroy-1.png) |
-
-
+![](./png/terraform-destroy-1.png) 
 
 ## 1.3.3 - Terraform Variables
