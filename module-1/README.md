@@ -3,6 +3,7 @@
 * [Connecting pgAdmin and Postgres](#123---connecting-pgadmin-and-postgres)
 * [Dockerizing the Ingestion Script](#124---dockerizing-the-ingestion-script)
 * [Running Postgres and pgAdmin with Docker-Compose](#125---running-postgres-and-pgadmin-with-docker-compose)
+* [SQL Resfresher](#126---sql-resfresher)
 
 ## 1.2.1 - Introduction to Docker
 我採用的設定，是透過 wsl 操作 Windows 系統中的 Docker。在開始前，記得啟動 Docker Desktop。
@@ -148,7 +149,41 @@ docker run -it \
 [![](https://img.shields.io/youtube/views/B1WwATwf-vY?style=social)](https://www.youtube.com/watch?v=B1WwATwf-vY)
 [![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
-> 在這個小節，我們學習如何將 1.2.2 的資料導入 (Data ingestion) 腳本也加入 Docker 中。
+> 在這個小節，我們學習如何將 1.2.2 的 Data ingestion 也加入 Docker 中。
+> 透過資料導入的步驟也納入容器中，為我們建置環境提供更多自動化的選擇。
+
+
+*PS: Alexey 在影片中先做出 `ingest_data.py` 並測試後，才放進 Docker。我在這邊的筆記中，將影片內的步驟簡化成線性的流程便於閱讀，實際上你還是可以跟著影片、測試每個環節的半成品來熟悉操作。*
+
+### Step 0. 移除資料
+* 為了測試，我們需要移除先前放入資料庫的資料。你可以在 pgAdmin 中 `Servers > Docker localhost > Databases > ny_taxi > Schemas > public > Tables > yellow_taxi_data` 右鍵點擊、選擇 `Query tool`，並輸入以下查詢移除資料。
+```sql
+DROP TABLE yellow_taxi_data;
+```
+
+* 或者你可以刪除 Volume，直接重新建一組空白的環境。
+
+```shell
+docker volume create --name dtc_postgres_volume_local -d local
+
+docker run -it  \
+    -e POSTGRES_USER="root" \
+    -e POSTGRES_PASSWORD="root" \
+    -e POSTGRES_DB="ny_taxi" \
+    -v dtc_postgres_volume_local:/var/lib/postgresql/data   \
+    -p 5432:5432 \
+    --network pg-network \
+    --name pg-database \
+    postgres:13
+
+docker run -it \
+    -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+    -e PGADMIN_DEFAULT_PASSWORD="root" \
+    -p 8080:80 \
+    --network=pg-network \
+    --name pg-admin\
+    dpage/pgadmin4
+```
 
 ### Step 1. 製作 CLI 工具 - `ingest_data.py`
 我們可以利用 `jupyter nbconvert` 將 `ipynb` 轉換為 `py` 檔
@@ -186,29 +221,14 @@ ENTRYPOINT [ "python", "ingest_data.py" ]
 ```
 
 ### Step 3. 運行容器
-```docker
-docker volume create --name dtc_postgres_volume_local -d local
-docker run -it  \
-    -e POSTGRES_USER="root" \
-    -e POSTGRES_PASSWORD="root" \
-    -e POSTGRES_DB="ny_taxi" \
-    -v dtc_postgres_volume_local:/var/lib/postgresql/data   \
-    -p 5432:5432 \
-    --network pg-network \
-    --name pg-database \
-    postgres:13
-docker run -it \
-    -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
-    -e PGADMIN_DEFAULT_PASSWORD="root" \
-    -p 8080:80 \
-    --network=pg-network \
-    --name pg-admin\
-    dpage/pgadmin4
-```
-
-```docker
-URL=https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet
+到這邊已經大致完成，我們先 `build` 製作出 image
+```shell
 docker build -t taxi_ingest:v001 .
+```
+再 `run` 產生並運行 docker 容器。
+```shell
+URL=https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet
+
 docker run -it \
     --network=pg-network \
     taxi_ingest:v001 \
@@ -287,17 +307,17 @@ docker compose down
 
 <br>
 
-## 6. SQL Resfresher
+## 1.2.6 - SQL Resfresher
 [![](https://img.shields.io/youtube/views/QEcps_iskgg?style=social)](https://www.youtube.com/watch?v=QEcps_iskgg)
 [![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
-#### Step 1. Docker-compose the whole service
+### Step 1. Docker-compose the whole service
 在 Youtube 影片中，Alexey 已經預先在 jupyter notebook 中將 zone 這個資料表放進去了。我在這邊採用了一個不同的方法：把前面的 `ingest_data.py` 和他對應的 Dockerfile 稍作調整後，加入 `docker-compose.yaml` 中。
 
 > [!TIP]
 > 值得一提的是，`ingest_data` 必須要在 `pgdatabase` 開啟之後才可以導入資料，因此我們要在`ingest_data`底下加入 `depend_on`、`pgdatabase` 底下加入 `healthcheck` 來確保服務的運行順序。具體細節可以參考這個小節的 [docker-compose.yaml](1.2.6%20-%20SQL%20Refresher/docker-compose.yaml)。
 
-#### Step 2. SQL queries
+### Step 2. SQL queries
 ```sql
 SELECT
     *
@@ -305,14 +325,107 @@ FROM
     trips
 LIMIT 100;
 ```
+TBD
 
 
+## 1.3.1 Terraform Primer
+[![](https://img.shields.io/youtube/views/s2bOYDCKl_M?style=social)](https://www.youtube.com/watch?v=s2bOYDCKl_M)
+[![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
 
+> 在這個小節，我們將會初步認識 [Terraform](https://www.terraform.io/)。
 
+![](https://www.terraform.io/_next/static/media/terraform-community_on-light.cda79e7c.svg)
+
+> [!NOTE]
+> HashiCorp Terraform 是一個 Infrastructure as code 工具，讓你在的配置文件中定義雲端和本地資源。我們能利用這些配置文件可以進行版本控制、重複使用和共享雲端或本地資源的設定。如此，你便可以使用一致的工作流程，來配置和管理整個基礎設施的生命週期。
+
+### Infrastructure as code
+> [!TIP]
+> 簡單來說，寫好 Terraform 腳本，接著跑程式碼，就可以讓 Terraform 自動幫你開好機器。我們不再需要到 Web 介面上去手動設定雲端資源。
+
+### Terraform is not ...
+* 不管理和更新基礎設施上的程式碼 (Does not manage and update code on infrastructure)
+  * Terraform 負責基礎設施的配置，但不會處理運行在基礎設施上的應用程式
+  * 例如：你透過 Terrafrom 開啟了一台 AWS 伺服器，它無法幫你在這台伺服器上安裝 Node.js，也無法部署你的網站代碼。
+* 無法更改不可變的資源 (Does not give you the ability to change immutable resources)
+  * 某些資源一旦創建就不能修改，需要銷毀並重新創建
+  * 例如：你建了一個在 North America 的 AWS S3 Bucket，你沒辦法單純透過設定更動存儲位置到 Asia Pacific，只能移除重建一個 Bucket。
+* 不用於管理未在 Terraform 文件中定義的資源 (Not used to manage resources not defined in your terraform files)
+  * 只能管理在 Terraform 配置文件中明確定義的資源，對於外部創建的資源則無法管理
+  * 例如：在使用 Terraform 之前手動部署的雲端資源，無法透過 Terraform 刪除。
 
 
 ## 1.3.2 Terraform Basics
-https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#example-usage---life-cycle-settings-for-storage-bucket-objects
+[![](https://img.shields.io/youtube/views/Y2ux7gq3Z0o?style=social)](https://www.youtube.com/watch?v=Y2ux7gq3Z0o)
+[![Static Badge](https://img.shields.io/badge/back_to_the_top-8A2BE2)](#table-of-content)
+
+> 在這個小節，我們將會學習基本的 Terraform 流程
+
+
+### Step 1. Create a Service Account
+
+1. 在 Google Cloud 中新增一個專案 (Project) 名稱為 `terraform-demo`
+2. 點選左上角開啟選單，點選 `IAM & Admin > Service Account`，進入頁面後點擊 `+ CREATE SERVICE ACCOUNT`，開起新增畫面。
+3. 在 `Service account details > Service account name` 輸入 terraform-runner，接著 `create and continue`
+4. 在 `Grant this service account access to project`中，依序加入 `Cloud Storage > Storage Admin` 和 `BigQuery > BigQuery Admin` 二個角色 (Role)，完成後回到 Service Account 那個畫面。
+5. 點選 terraform-runner，開啟選單後點選 `Manage key`，接著 `Add key > Create new key > JSON`，然後把這個 json 個式的私鑰下載到工作目錄(影片中是`terrademo`)下的 `keys` 資料夾取名為 `my-creds.json`。
+
+
+### Step 2. Create Terraform Script
+建立一個檔案 `./main.tf`，並在 [Example Usage - Life cycle settings for storage bucket objects](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket#example-usage---life-cycle-settings-for-storage-bucket-objects) 複製建立雲端空間的程式片段。
+
+```terraform
+terraform {
+  required_providers {
+    google = {
+      source = "hashicorp/google"
+      version = "6.7.0"
+    }
+  }
+}
+
+provider "google" {
+  project     = "terraform-demo-439216"
+  region      = "us-central1"
+  credentials = "./keys/my-creds.json"
+}
+
+resource "google_storage_bucket" "demo-bucket" {
+  name          = "terraform-demo-439216-terra-bucket"
+  location      = "US"
+  force_destroy = true
+
+  lifecycle_rule {
+    condition {
+      age = 1
+    }
+    action {
+      type = "AbortIncompleteMultipartUpload"
+    }   
+  }
+}
+```
+我們首先初始化專案：
+```shell
+terraform init 
+```
+接著使用 `plan` 產生部署計畫，這時候畫面上會顯示計畫的具體細節：
+```
+terraform plan
+```
+最後使用 `apply` 執行計畫，terraform 將會執行剛剛 `plan` 的設定，為我們建立一個 google storage bucket
+```shell
+terraform apply
+```
+如果不需要資源了，我們可以利用 `destroy` 刪除雲端資源
+```shell
+terraform destroy
+```
+
+|   terraform apply   |   terraform destroy  |
+| :--------------------: | :-----------------------: |
+| ![](./png/terraform-apply-1.png) | ![](./png/terraform-destroy-1.png) |
+
 
 
 ## 1.3.3 - Terraform Variables
