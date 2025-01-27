@@ -1,0 +1,20 @@
+services:
+  database:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ny_taxi
+    ports:
+      - 5433:5432
+
+  cli:
+    image: python:latest
+    container_name: pgcli
+    entrypoint: /entrypoint.sh
+    depends_on:
+      - database
+    volumes:
+      - ./q3-entrypoint.sh:/entrypoint.sh
+      - ./q3-data-ingestion.py:/data-ingestion.py
