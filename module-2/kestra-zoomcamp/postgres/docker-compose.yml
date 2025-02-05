@@ -19,6 +19,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: root
     ports:
       - "8082:80" # modified
+    volumes:
+      - ./servers.json:/pgadmin4/servers.json
 
 volumes:
   postgres-data:
