@@ -4,7 +4,7 @@
 # Version 2025
 ## 2.2.1 - Workflow Orchestration Introduction
 [![](https://img.shields.io/youtube/views/Np6QmmcgLCs?style=social)](https://www.youtube.com/watch?v=Np6QmmcgLCs)
-[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-content)
+[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-contents)
 
 > 協調 (Orchestration) 就像一支音樂管弦樂隊。你有各種不同的樂器——小提琴、喇叭、長笛——每種樂器都發出不同的聲音。它們需要在不同的時間演奏，但有些也需要同時演奏。 
 > 
@@ -14,11 +14,9 @@
 
 ## 2.2.2 - Learn Kestra
 [![](https://img.shields.io/youtube/views/o79n-EVpics?style=social)](https://www.youtube.com/watch?v=o79n-EVpics)
-[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-content)
+[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-contents)
 
-> 告訴你去哪裡取得 Kestra 的相關資訊，可以跳過不看。
->
-> 這邊簡單筆記後續執行所需要的資訊。
+> 這個小節告訴你去哪裡取得 Kestra 的相關資訊，此篇簡單筆記後續執行所需要的資訊。
 
 ### 安裝方法
 
@@ -38,6 +36,8 @@ docker compose up
 接著在瀏覽器開啟 [http://localhost:8080](http://localhost:8080) 便可以操作 Kestra 的 UI。
 
 ### Kestra 的 Hello World 
+<details>
+
 1. 順利啟動 Kestra 後，可以看到以下畫面。
 
 ![](png/kestra-homepage.png)
@@ -64,10 +64,11 @@ tasks:
     type: io.kestra.plugin.core.log.Log
     message: Hello World! 🚀
 ```
+</details>
 
 ## 2.2.3 ETL Pipelines with Postgres in Kestra
 [![](https://img.shields.io/youtube/views/OkfLX28Ecjg?style=social)](https://www.youtube.com/watch?v=OkfLX28Ecjg)
-[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-content)
+[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-contents)
 
 https://kestra.io/docs/installation/docker-compose#networking-in-docker-compose
 
@@ -109,7 +110,13 @@ services:
     # ...
     ports:
       - "8082:80" # modified from "8080:80"
+    volumes:
+      - ./servers.json:/pgadmin4/servers.json # import server settings when service is started
 ```
+> [!TIP]
+> 我們可以在 docker-compose 中，將 servers.json 掛載 (mount) 到 /pgadmin4/servers.json 這個位置，這樣一來，
+> 我們登入 pgAdmin 後就可以單就輸入密碼 (k3str4) 就完成設定資料庫的步驟了。
+
 
 ### Inputs & Variables
 
@@ -176,13 +183,13 @@ pluginDefaults:
 ## 2.2.4 Manage Scheduling and Backfills with Postgres in Kestra
 
 [![](https://img.shields.io/youtube/views/_-li_z97zog?style=social)](https://www.youtube.com/watch?v=_-li_z97zog)
-[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-content)
+[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-contents)
 
 
 
 ## 2.2.5 Orchestrate dbt Models with Postgres in Kestra
 [![](https://img.shields.io/youtube/views/ZLp2N6p2JjE?style=social)](https://www.youtube.com/watch?v=ZLp2N6p2JjE)
-[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-content)
+[![Static Badge](https://img.shields.io/badge/back_to_top-8A2BE2)](#table-of-contents)
 
 
 
